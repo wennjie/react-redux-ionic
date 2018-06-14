@@ -383,6 +383,119 @@ We now have a functional app using React and Redux. The app lets you input an ac
 
 Next, we will separate the AddActivity form into it's own page and set up routing.
 
+## Pages and Routing
+
+We have pretty simple application with a list, filters and and input field. This is all cramped into App.js. Pretty soon this will get out of hand. Our AddActivity needs more fields, the list needs more details and we might at a search bar, etc. Pages are a nice abstraction for this. We create pages that consist of a number of components and containers. If we have multiple pages they can even share the same components and containers.
+
+We'll start by creating a page for our AddActivity container. First we create the pages folder
+`mkdir pages`
+In this folder we create the file AddActivityPage.js
+`touch AddActivityPage.js`
+With the content
+
+```jsx
+import React from 'react'
+import AddActivity from '../containers/AddActivity'
+
+const AddActivityPage = ({nav}) => (
+    <AddActivity/>
+)
+
+export default AddActivityPage
+```
+
+For now, this is basically just a wrapper around the AddActivity container we made previously.
+
+To be able to navigate from one page to another we need to implement routing. There are many options but we will user React Router.
+`npm install --save react-router-dom`
+
+Our root index.js will have to know about routing. We therefore replace <App/> with
+
+```jsx
+<Router>
+    <Route exact path="/" component={App} />
+    <Route exact path="/add-activity" component={AddActivity} />
+</Router>
+```
+
+This tells the app to render App if the url exactly matches the specified path. We have specified two paths for routing: the root, which routes to our apps main component and a route to the AddActivity page.
+
+We want to create a link to AddActivity as part of our header. First, we'll add a component with a button that activates the routing. In /components add the file AddActivityLink.js
+`touch AddActivityLink.js`
+And insert
+
+```jsx
+import React from 'react'
+import { withRouter } from 'react-router-dom'
+
+const AddActivityLink = withRouter(({ history }) => (
+    <button
+        type='button'
+        onClick={() => { history.push('/add-activity') }}
+        style={{
+            marginLeft: '4px',
+        }}
+    >
+        Add Activity
+    </button>
+))
+
+export default AddActivityLink
+```
+To activate routing we use `withHistory`. The withRouter higher-order component will inject the history object as a prop of the component. This allows you to access the push and replace methods without having to deal with the context.
+
+The AddActivityLink component is added as part of the header component
+
+```jsx
+import React from 'react'
+import FilterLink from '../containers/FilterLink'
+import { VisibilityFilters } from '../actions/filter'
+import AddActivityLink from '../components/AddActivityLink'
+
+const Header = () => (
+    <div>
+        <span>Show: </span>
+        <FilterLink filter={VisibilityFilters.SHOW_ALL}>
+            All
+        </FilterLink>
+        <FilterLink filter={VisibilityFilters.SHOW_ACTIVE}>
+            Active
+        </FilterLink>
+        <FilterLink filter={VisibilityFilters.SHOW_COMPLETED}>
+            Completed
+        </FilterLink>
+
+        <AddActivityLink/>
+    </div>
+)
+
+export default Header
+```
+
+Similarly, we'll add a button on the AddActivity container to navigate back to the list. Because we'll probably need this in many places, we''l create this button as a separate component. In the components folder add the file ReturnToActivityList.js
+`touch ReturnToActivityList.js`
+
+```jsx
+import { withRouter } from 'react-router-dom'
+
+const ReturnToList = withRouter(({ history }) => (
+    <button
+        type='button'
+        onClick={() => { history.push('/') }}
+        style={{
+            marginLeft: '4px',
+        }}
+    >
+        Return to Activities List
+  </button>
+))
+```
+
+And add this to the AddActivity container.
+
+We have now set up routing and split our application into two pages.
+
+
 
 ---
 

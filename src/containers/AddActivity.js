@@ -1,6 +1,8 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { addActivity } from '../actions/activities'
+import ReturnToActivityList from '../components/ReturnToActivityList'
+
 
 const AddActivity = ({ dispatch }) => {
     let input
@@ -22,7 +24,9 @@ const AddActivity = ({ dispatch }) => {
                     Add Activity
         </button>
             </form>
+            <ReturnToActivityList/>
         </div>
+        
     )
 }
 
