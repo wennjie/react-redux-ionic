@@ -2,7 +2,8 @@ import React from 'react'
 import Activity from './Activity'
 
 const ActivityList = ({ activities, toggleActivity }) => (
-    <ul>
+    <div>
+    <ion-list>
         {activities.map(activity =>
             <Activity
                 key={activity.id}
@@ -10,7 +11,8 @@ const ActivityList = ({ activities, toggleActivity }) => (
                 onClick={() => toggleActivity(activity.id)}
             />
         )}
-    </ul>
+    </ion-list>
+        </div>
 )
 
 export default ActivityList

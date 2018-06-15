@@ -5,8 +5,11 @@ import VisibleActivityList from './containers/VisibleActivityList'
 const App = () => (
   <div>
     <Header />
-    <VisibleActivityList />
-  </div>
+    <ion-content fullscreen="true">
+      <VisibleActivityList />
+    </ion-content>
+    </div>
+
 )
 
 export default App

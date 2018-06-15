@@ -1,14 +1,12 @@
 import React from 'react'
 
 const Activity = ({ onClick, completed, text }) => (
-    <li
+    <ion-item
         onClick={onClick}
-        style={{
-            textDecoration: completed ? 'line-through' : 'none'
-        }}
+        color={ completed ? 'primary' : 'none'}  
     >
         {text}
-    </li>
+    </ion-item>
 )
 
 export default Activity

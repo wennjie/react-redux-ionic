@@ -3,12 +3,20 @@ import { connect } from 'react-redux'
 import { addActivity } from '../actions/activities'
 import ReturnToActivityList from '../components/ReturnToActivityList'
 
-
-const AddActivity = ({ dispatch }) => {
+const AddActivity = ({ dispatch,back }) => {
     let input
 
     return (
         <div>
+        <ion-header>
+            <ion-toolbar>
+                <ion-title>Add Activity</ion-title>
+                    <ion-buttons slot="start">
+                        <ReturnToActivityList/>
+                    </ion-buttons>
+            </ion-toolbar>
+        </ion-header>
+
             <form
                 onSubmit={e => {
                     e.preventDefault()
@@ -19,13 +27,17 @@ const AddActivity = ({ dispatch }) => {
                     input.value = ''
                 }}
             >
-                <input ref={node => input = node} />
-                <button type="submit">
+                <ion-list>
+                    <ion-item>
+                        <ion-label color="primary" position="stacked">Title</ion-label>
+                        <ion-input type="text" ref={node => input = node}></ion-input>
+                    </ion-item>
+                </ion-list>
+                <ion-button type="submit" expand="full">
                     Add Activity
-        </button>
+                </ion-button>
             </form>
-            <ReturnToActivityList/>
-        </div>
+            </div>
         
     )
 }

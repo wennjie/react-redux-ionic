@@ -12,10 +12,10 @@ const store = createStore(rootReducer)
 render(
     <Provider store={store}>
         <Router>
-            <div>
+            <ion-app>
             <Route exact path="/" component={App} />
             <Route path="/add-activity" component={AddActivity} />
-            </div>
+            </ion-app>
         </Router>
     </Provider>,
     document.getElementById('root')

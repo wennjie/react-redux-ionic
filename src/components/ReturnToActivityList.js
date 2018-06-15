@@ -2,15 +2,11 @@ import React from 'react'
 import { withRouter } from 'react-router-dom'
 
 const ReturnToActivityList = withRouter(({ history }) => (
-    <button
-        type='button'
+    <ion-button
         onClick={() => { history.push('/') }}
-        style={{
-            marginLeft: '4px',
-        }}
     >
-        Return to Activities List
-  </button>
+        <ion-icon name="arrow-back"></ion-icon>
+  </ion-button>
 ))
 
 export default ReturnToActivityList

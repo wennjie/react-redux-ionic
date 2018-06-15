@@ -1,15 +1,12 @@
 import React from 'react'
 
 const Link = ({ active, children, onClick }) => (
-    <button
+    <ion-button fill="clear"
         onClick={onClick}
         disabled={active}
-        style={{
-            marginLeft: '4px',
-        }}
     >
         {children}
-    </button>
+    </ion-button>
 )
 
 export default Link
