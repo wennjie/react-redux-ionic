@@ -14,7 +14,7 @@ Next steps are
 - Unit tests
 - Animation and transitions
 - Service worker for PWA
-- Save ionic library locally (in public folder) 
+- Save ionic library locally (in public folder)
 
 ## The basics
 
@@ -498,3 +498,216 @@ const ReturnToList = withRouter(({ history }) => (
 And add this to the AddActivity container.
 
 We have now set up routing and split our application into two pages.
+
+
+## Ionic Components
+
+Ionic provide a collection of UI components that is optimized for mobile use. Done right, they provide a near native look and feel. With some consideration they can also provide a good desktop experience.
+
+### Setting it up
+
+First we'll import the library. Currently there is no way to do this using af module loader (npm or yarn). Instead we will add it manually to the index.html in the public folder. Add the following line just before the closing head-tag.
+```html
+`<script src="https://unpkg.com/@ionic/core@4.0.0-alpha.7/dist/ionic.js"></script>`
+```
+
+All ionic components are now available to use in the app. All ionic components should be wrapped in a single ion-app container. This will be added in the the root index.js file inside the router tag.
+
+```jsx
+import React from 'react'
+import { render } from 'react-dom'
+import { createStore } from 'redux'
+import rootReducer from './reducers'
+import { Provider } from 'react-redux'
+import { BrowserRouter as Router, Route } from 'react-router-dom'
+import App from './App'
+import AddActivity from './pages/AddActivityPage';
+
+const store = createStore(rootReducer)
+
+render(
+  <Provider store={store}>
+    <Router>
+      <ion-app>
+        <Route exact path="/" component={App} />
+        <Route path="/add-activity" component={AddActivity} />
+      </ion-app>
+    </Router>
+  </Provider>,
+document.getElementById('root')
+)
+```
+
+Now the app is set up for ionic components.
+
+### Toolbar
+
+To create and app with a top toolbar and a scrollable area beneath, we need to use the ion-content component and set the attribute fullscreen to true. The ion-content is placed beneath the header that will contain our toolbar.
+
+```jsx
+import React from 'react'
+import Header from './components/Header'
+import VisibleActivityList from './containers/VisibleActivityList'
+
+const App = () => (
+  <div>
+    <Header />
+    <ion-content fullscreen="true">
+      <VisibleActivityList />
+    </ion-content>
+    </div>
+
+)
+
+export default App
+```
+
+In our header component we add the toolbar, that will have a set of buttons. We'll group the filtering buttons and place them to the left, and move the AddActivity button to the right.
+
+In the header component we replace the outer most <div> with <ion-header>. This will make the toolbar stays at the top. Inside the toolbar we have two sets of buttons. Using the ion-buttons component we can group, and place them to the left (start) or right (end).
+```jsx
+import React from 'react'
+import FilterLink from '../containers/FilterLink'
+import { VisibilityFilters } from '../actions/filter'
+import AddActivityLink from '../components/AddActivityLink'
+
+const Header = () => (
+    <ion-header>
+    <ion-toolbar>
+        <ion-buttons slot="start">
+            <FilterLink filter={VisibilityFilters.SHOW_ALL}>
+                All
+            </FilterLink>
+            <FilterLink filter={VisibilityFilters.SHOW_ACTIVE}>
+                Active
+            </FilterLink>
+            <FilterLink filter={VisibilityFilters.SHOW_COMPLETED}>
+                Completed
+            </FilterLink>
+        </ion-buttons>
+        <ion-buttons slot="end">
+            <AddActivityLink/>
+        </ion-buttons>
+    </ion-toolbar>
+    </ion-header>
+)
+
+export default Header
+```
+
+In our Link and AddActivityLink components the button tag is replaced with ion-button, we remove the style attribute and add the attribute fill and set it to clear.
+
+### List
+
+For the list we use the ion-list component. Basically we replace the ul tag by ion-list and wrap the whole component in divs.
+
+```jsx
+import React from 'react'
+import Activity from './Activity'
+
+const ActivityList = ({ activities, toggleActivity }) => (
+    <div>
+    <ion-list>
+        {activities.map(activity =>
+            <Activity
+                key={activity.id}
+                {...activity}
+                onClick={() => toggleActivity(activity.id)}
+            />
+        )}
+    </ion-list>
+        </div>
+)
+
+export default ActivityList
+```
+
+In the Activity component we replace the li tags with ion-item. Instead of the current strikethrough styling for completed activities we want the whole row to change its color. We remove the style attribute and replace it with ionic's color attribute. If the activity is completed we set the row color to primary.
+
+```jsx
+import React from 'react'
+
+const Activity = ({ onClick, completed, text }) => (
+    <ion-item
+        onClick={onClick}
+        color={ completed ? 'primary' : 'none'}  
+    >
+        {text}
+    </ion-item>
+)
+
+export default Activity
+```
+
+### Add Activity
+
+Our AddActivity page needs a header too. Instead of the current button to navigate to the list we add a back button.
+
+We use ion-button in the ReturnToActivityList component and replace the text with an icon.
+
+```jsx
+import React from 'react'
+import { withRouter } from 'react-router-dom'
+
+const ReturnToActivityList = withRouter(({ history }) => (
+    <ion-button
+        onClick={() => { history.push('/') }}
+    >
+        <ion-icon name="arrow-back"></ion-icon>
+  </ion-button>
+))
+
+export default ReturnToActivityList
+```
+
+In the AddActivity container we add a toolbar in the same way we created the toolbar in the main component.
+
+We wrap the input field in an ion-list and make the AddActivity button use the whole width of the screen.
+
+```jsx
+import React from 'react'
+import { connect } from 'react-redux'
+import { addActivity } from '../actions/activities'
+import ReturnToActivityList from '../components/ReturnToActivityList'
+
+const AddActivity = ({ dispatch,back }) => {
+    let input
+
+    return (
+        <div>
+        <ion-header>
+            <ion-toolbar>
+                <ion-title>Add Activity</ion-title>
+                    <ion-buttons slot="start">
+                        <ReturnToActivityList/>
+                    </ion-buttons>
+            </ion-toolbar>
+        </ion-header>
+
+            <form
+                onSubmit={e => {
+                    e.preventDefault()
+                    if (!input.value.trim()) {
+                        return
+                    }
+                    dispatch(addActivity(input.value))
+                    input.value = ''
+                }}
+            >
+                <ion-list>
+                    <ion-item>
+                        <ion-label color="primary" position="stacked">Title</ion-label>
+                        <ion-input type="text" ref={node => input = node}></ion-input>
+                    </ion-item>
+                </ion-list>
+                <ion-button type="submit" expand="full">
+                    Add Activity
+                </ion-button>
+            </form>
+            </div>
+        
+    )
+}
+
+export default connect()(AddActivity)
+```
