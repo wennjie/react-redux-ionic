@@ -711,3 +711,249 @@ const AddActivity = ({ dispatch,back }) => {
 
 export default connect()(AddActivity)
 ```
+
+## Asynchronous actions
+
+With asynchronous actions we no longer have the simple flow: 
+ - dispatch action -> update new state. 
+ Instead we have: 
+ - dispath action -> wait for reponse ->  if success, update new state. If failure, do something else.
+
+Asynchronous actions can be many things but typically it's interactions with a data server. This complicates the otherwise clean Redux pattern even more. With Redux we dispatch an action, create a copy of the state with the updated information and update the UI. Our reducers are pure functions, meaning they rely only on the provided input and has no side effects. This can not be the case when we interact with a server. If the reducer makes a server request, the output is no longer strictly a function of its inputs. It may also affect data outside its output, eg. on the server. 
+
+There are a number of ways to handle this. A popular way is using middleware. Middleware is software that sits between and action and a response or between an input and output. In this case we want middleware that picks up the action, modifies its payload, dispatch other actions, and forwards the modified action to the reducer.
+
+In this way we keep our reducer clean, and without side effects. Of course, we still have side effects since request from a data server are inherently side effects. But it helps keeping our reducers lean and with a single responsibility: updating state.
+
+### Thunk Middleware
+
+For making server requests, Thunk is a popular library. First we install it:
+
+`npm install redux-thunk --save`
+
+and import it to the root index.js. The createStore method takes the method `applyMiddleware` as its second argument. This method, in turn, takes middleware as arguments. We will only add Thunk but this is where we would include middleware for logging and much more.
+
+```jsx
+import React from 'react'
+import { render } from 'react-dom'
+import { createStore } from 'redux'
+import rootReducer from './reducers'
+import { Provider } from 'react-redux'
+import { BrowserRouter as Router, Route } from 'react-router-dom'
+import App from './App'
+import AddActivity from './pages/AddActivityPage';
+import thunkMiddleware from 'redux-thunk'
+
+const store = createStore(rootReducer)
+
+const store = createStore(
+    rootReducer,
+    applyMiddleware(
+        thunkMiddleware,
+    )
+)
+
+render(
+  <Provider store={store}>
+    <Router>
+      <ion-app>
+        <Route exact path="/" component={App} />
+        <Route path="/add-activity" component={AddActivity} />
+      </ion-app>
+    </Router>
+  </Provider>,
+document.getElementById('root')
+)
+```
+
+We are making a requst to get a list of activities. Instead of a real server, we will just fetch a JSON file locally. The approach is exactly the same as fetching from a server without authentication.
+
+In the ../public folder we add the folder called data. Here we create the file activities.json and add the following content:
+
+```JSON
+[
+    {
+        "id": "e3093417-81be-49c2-8503-93352d66fe2e",
+        "category": {
+            "id": 2,
+            "name": "Email"
+        },
+        "startTimestamp": 1531209600000.0,
+        "company": {
+            "productionUnitNumber": null,
+            "location": {
+                "latitude": 55.2910616,
+                "longitude": 12.31975895
+            },
+            "id": 2181900,
+            "name": "My Company"
+        },
+        "contacts": [
+            {
+                "id": "ee23547b-23ba-4cc7-a592-21c0f6639897",
+                "firstName": "John",
+                "lastName": "Smith"
+            }
+        ],
+        "isFavorite": false,
+        "completedTimestamp": null,
+        "organization": {
+            "id": 1,
+            "name": "My Organization"
+        },
+        "createdByUser": {
+            "id": 1005,
+            "name": "Sara Olsen"
+        }
+    },
+    {
+        "id": "382e3a58-80fb-4151-92ce-89cf315475ba",
+        "category": {
+            "id": 2,
+            "name": "Email"
+        },
+        "startTimestamp": 1528722900000.0,
+        "company": {
+            "productionUnitNumber": null,
+            "location": {
+                "latitude": 55.93392463,
+                "longitude": 11.58053358
+            },
+            "id": 2482259,
+            "name": "Another Company"
+        },
+        "contacts": [
+            {
+                "id": "9164dae7-a796-443d-8617-1ff61d88176e",
+                "firstName": "Michael",
+                "lastName": "Larsen"
+            }
+        ],
+        "isFavorite": false,
+        "completedTimestamp": null,
+        "organization": {
+            "id": 1,
+            "name": "My Organization"
+        },
+        "createdByUser": {
+            "id": 1005,
+            "name": "Sara Olsen"
+        }
+    }
+]
+```
+
+In our activites.js in the actions folder we will create the actions for the request. We will create three methods:
+
+1. fetchActivities
+2. requestActivities
+3. receiveActivities
+
+`fetchActivities` is a wrapper for `requestActivities` and `receiveActivities`. It takes a query as its only argument, passes it to `requestActivities`, dispatch this to the reducer, and requests the data using the `fetch` method, which returns a promise. `requestActivities` sets the state to isFetching. When `fetch` has resolved we dispatch `receiveActivities`. This action updates the state with the returned data and sets isFetching to `false`.
+
+Since we are switching to our mock data server, we will remove the current AddActivity medthod. Our activies.js in the action folder becomes:
+
+```jsx
+export const REQUEST_ACTIVITIES = 'REQUEST_ACTIVITIES'
+export const RECEIVE_ACTIVITIES = 'RECEIVE_ACTIVITIES'
+export const SHOW_ACTIVITY_DETAIL = 'SHOW_ACTIVITY_DETAIL'
+
+export function showActivityDetail(id) {
+    return dispatch => {
+        dispatch({
+            type: SHOW_ACTIVITY_DETAIL,
+            id
+        })
+    }
+}
+
+let nextActivityId = 0
+export const addActivity = text => ({
+    type: 'ADD_ACTIVITY',
+    id: nextActivityId++,
+    text
+})
+
+export const toggleActivity = id => ({
+    type: 'TOGGLE_ACTIVITY',
+    id
+})
+
+function requestActivities(query) {
+    return {
+        type: REQUEST_ACTIVITIES,
+        query
+    }
+}
+
+function receiveActivities(json) {
+    return {
+        type: RECEIVE_ACTIVITIES,
+        activities: json,
+        receivedAt: Date.now()
+    }
+}
+
+export function fetchActivities(query) {
+    return dispatch => {
+        dispatch(requestActivities(query))
+        return fetch(`/data/activities.json`)
+            .then(response => response.json())
+            .then(json => dispatch(receiveActivities(json)))
+    }
+}
+```
+
+And the activities reducer becomes
+
+```jsx
+import {
+    REQUEST_ACTIVITIES,
+    RECEIVE_ACTIVITIES
+} from '../actions/activities'
+
+
+function activities(
+    state = {
+        isFetching: false,
+        didInvalidate: false,
+        activities: [],
+        activity: {}
+    },
+    action
+) {
+    switch (action.type) {
+        case 'ADD_ACTIVITY':
+            return [
+                ...state,
+                {
+                    id: action.id,
+                    text: action.text,
+                    completed: false
+                }
+            ]
+        case 'TOGGLE_ACTIVITY':
+            return state.map(activity =>
+                (activity.id === action.id)
+                    ? { ...activity, completed: !activity.completed }
+                    : activity
+            )
+        case REQUEST_ACTIVITIES:
+            return Object.assign({}, state, {
+                isFetching: true,
+                didInvalidate: false
+            })
+        case RECEIVE_ACTIVITIES:
+            return Object.assign({}, state, {
+                isFetching: false,
+                didInvalidate: false,
+                activities: action.activities,
+                lastUpdated: action.receivedAt
+            })
+        default:
+            return state
+    }
+}
+
+export default activities
+```
