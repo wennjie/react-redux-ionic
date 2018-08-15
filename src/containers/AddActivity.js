@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { addActivity } from '../actions/activities'
-import ReturnToActivityList from '../components/ReturnToActivityList'
+import BackButton from '../components/BackButton'
 
 const AddActivity = ({ dispatch,back }) => {
     let input
@@ -12,7 +12,7 @@ const AddActivity = ({ dispatch,back }) => {
             <ion-toolbar>
                 <ion-title>Add Activity</ion-title>
                     <ion-buttons slot="start">
-                        <ReturnToActivityList/>
+                        <BackButton/>
                     </ion-buttons>
             </ion-toolbar>
         </ion-header>
