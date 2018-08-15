@@ -9,10 +9,14 @@ export const addActivity = text => ({
     text
 })
 
-export const toggleActivity = id => ({
-    type: 'TOGGLE_ACTIVITY',
-    id
-})
+export function showActivityDetail(id) {
+    return dispatch => {
+        dispatch({
+            type: SHOW_ACTIVITY_DETAIL,
+            id
+        })
+    }
+}
 
 function requestActivities(query) {
     return {

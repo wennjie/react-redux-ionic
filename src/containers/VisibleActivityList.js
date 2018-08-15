@@ -1,5 +1,5 @@
 import { connect } from 'react-redux'
-import { toggleActivity } from '../actions/activities'
+import { showActivityDetail } from '../actions/activities'
 import ActivityList from '../components/ActivityList'
 import { VisibilityFilters } from '../actions/filter'
 
@@ -21,7 +21,7 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
-    toggleActivity: id => dispatch(toggleActivity(id))
+    showActivityDetail: id => dispatch(showActivityDetail(id))
 })
 
 export default connect(

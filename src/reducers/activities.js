@@ -23,12 +23,6 @@ function activities(
                     completed: false
                 }
             ]
-        case 'TOGGLE_ACTIVITY':
-            return state.map(activity =>
-                (activity.id === action.id)
-                    ? { ...activity, completed: !activity.completed }
-                    : activity
-            )
         case REQUEST_ACTIVITIES:
             return Object.assign({}, state, {
                 isFetching: true,
