@@ -226,7 +226,7 @@ const Activity = ({ onClick, completed, text }) => (
 
 export default Activity
 ```
-Header.js holds the links for filtering the list
+Header.js holds the links for filtering the list. When returning multiple components, you have the option of wrapping them in a div, or some other component/tag, or you can return an array of components. Here is an example of wrapping in a div tag:
 
 ```javascript
 import React from 'react'
@@ -250,6 +250,69 @@ const Header = () => (
 
 export default Header
 ```
+
+And here's the same component using an array:
+
+```javascript
+import React from 'react'
+import FilterLink from '../containers/FilterLink'
+import { VisibilityFilters } from '../actions/filter'
+
+const Header = () => [
+    <span>Show: </span>,
+    <FilterLink filter={VisibilityFilters.SHOW_ALL}>
+        All
+    </FilterLink>,
+    <FilterLink filter={VisibilityFilters.SHOW_ACTIVE}>
+        Active
+    </FilterLink>,
+    <FilterLink filter={VisibilityFilters.SHOW_COMPLETED}>
+        Completed
+    </FilterLink>
+]
+
+export default Header
+```
+
+Notice the comma separation. This is  of course just standard notation for separating elements in an array. Going forward, we will mostly stick to the array notation.
+
+The diffence more than just syntax. Using wrappers can cause problems in cases where the component behaves differently if used as child element wrapped in a div. Most notable example is:
+
+```jsx
+const Table = () => (
+      <table>
+        <tr>
+          <Columns />
+        </tr>
+      </table>
+    );
+```
+
+Where Columns is: 
+
+```jsx
+const Table = () => (
+      <div>
+        <td>Hello</td>
+        <td>World</td>
+      </div>
+    );
+```
+
+In this case `<Table />` renders as:
+
+```html
+<table>
+  <tr>
+    <div>
+      <td>Hello</td>
+      <td>World</td>
+    </div>
+  </tr>
+</table>
+```
+
+Which is invalid html, because of the divs.
 
 And Link.js is a single link
 
@@ -277,7 +340,7 @@ We will create three containers
 
 `touch VisibleActivityList.js FilterLink.js AddActivity.js`
 
-Generally, containers will have to methods and export them using the connect method. The methods are mapStateToProps and mapDispatchToProps. The names are well chosen. mapStateToProps takes a slice of the store and maps it to props for the component specified in the connect method.
+Generally, containers will have two methods and export them using the connect method. The methods are mapStateToProps and mapDispatchToProps. The names are well chosen. mapStateToProps takes a slice of the store and maps it to props for the component specified in the connect method.
 
 The clearest example of this is FilterLink.js.
 
@@ -358,7 +421,6 @@ const AddActivity = ({ dispatch }) => {
     let input
 
     return (
-        <div>
             <form
                 onSubmit={e => {
                     e.preventDefault()
@@ -370,11 +432,8 @@ const AddActivity = ({ dispatch }) => {
                 }}
             >
                 <input ref={node => input = node} />
-                <button type="submit">
-                    Add Activity
-        </button>
+                <button type="submit"> Add Activity </button>
             </form>
-        </div>
     )
 }
 
@@ -457,22 +516,20 @@ import FilterLink from '../containers/FilterLink'
 import { VisibilityFilters } from '../actions/filter'
 import AddActivityLink from '../components/AddActivityLink'
 
-const Header = () => (
-    <div>
-        <span>Show: </span>
+const Header = () => [
+        <span>Show: </span>,
         <FilterLink filter={VisibilityFilters.SHOW_ALL}>
             All
-        </FilterLink>
+        </FilterLink>,
         <FilterLink filter={VisibilityFilters.SHOW_ACTIVE}>
             Active
-        </FilterLink>
+        </FilterLink>,
         <FilterLink filter={VisibilityFilters.SHOW_COMPLETED}>
             Completed
-        </FilterLink>
+        </FilterLink>,
 
         <AddActivityLink/>
-    </div>
-)
+]
 
 export default Header
 ```
@@ -564,29 +621,29 @@ Now the app is set up for ionic components.
 
 ### Toolbar
 
-To create an app with a top toolbar and a scrollable area beneath, we need to use the ion-content component and set the attribute fullscreen to true. The ion-content is placed beneath the header that will contain our toolbar.
+To create an app with a top toolbar and a scrollable area beneath, we use the ion-content component. The ion-content is placed beneath the header that will contain our toolbar.
 
 ```jsx
 import React from 'react'
 import Header from './components/Header'
 import VisibleActivityList from './containers/VisibleActivityList'
 
-const App = () => (
-  <div>
-    <Header />
-    <ion-content fullscreen="true">
+const App = () => [
+    <Header />,
+    <ion-content>
       <VisibleActivityList />
     </ion-content>
-    </div>
-
-)
+]
 
 export default App
 ```
 
 In our header component we add the toolbar, that will have a set of buttons. We'll group the filtering buttons and place them to the left, and move the AddActivity button to the right.
 
-Replace the outer most <div> with <ion-header>. This will make sure the toolbar stays at the top. Inside the toolbar we have two sets of buttons. Using the ion-buttons component we can group, and place them to the left (start) or right (end).
+We wrap the components in a <ion-header>. This will make sure the toolbar stays at the top. Notice we no longer need to return the components as an array, since it is now wrapped.
+
+Inside the toolbar we have two sets of buttons. Using the ion-buttons component we can group, and place them to the left (start) or right (end).
+
 ```jsx
 import React from 'react'
 import FilterLink from '../containers/FilterLink'
@@ -627,14 +684,13 @@ Also, in the BackButton we replace the text "Back" with an icon:
 
 ### List
 
-For the list we use the ion-list component. Basically we replace the ul tag by ion-list and wrap the whole component in divs.
+For the list we use the ion-list component. Basically we replace the ul tag with ion-list.
 
 ```jsx
 import React from 'react'
 import Activity from './Activity'
 
 const ActivityList = ({ activities, toggleActivity }) => (
-    <div>
     <ion-list>
         {activities.map(activity =>
             <Activity
@@ -644,7 +700,6 @@ const ActivityList = ({ activities, toggleActivity }) => (
             />
         )}
     </ion-list>
-        </div>
 )
 
 export default ActivityList
@@ -677,22 +732,21 @@ We wrap the input field in an ion-list and make the AddActivity button use the w
 import React from 'react'
 import { connect } from 'react-redux'
 import { addActivity } from '../actions/activities'
-import ReturnToActivityList from '../components/ReturnToActivityList'
+import BackButton from '../components/BackButton'
 
 const AddActivity = ({ dispatch,back }) => {
     let input
 
-    return (
-        <div>
+    return [
         <ion-header>
             <ion-toolbar>
                 <ion-title>Add Activity</ion-title>
                     <ion-buttons slot="start">
-                        <ReturnToActivityList/>
+                        <BackButton/>
                     </ion-buttons>
             </ion-toolbar>
-        </ion-header>
-
+        </ion-header>,
+        <ion-content>
             <form
                 onSubmit={e => {
                     e.preventDefault()
@@ -713,9 +767,8 @@ const AddActivity = ({ dispatch,back }) => {
                     Add Activity
                 </ion-button>
             </form>
-            </div>
-        
-    )
+        </ion-content>
+            ]
 }
 
 export default connect()(AddActivity)

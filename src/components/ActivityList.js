@@ -4,7 +4,6 @@ import { withRouter } from 'react-router-dom'
 import SHOW_ACTIVITY_DETAIL from '../actions/activities'
 
 const ActivityList = withRouter(({ activities, showActivityDetail, history }) => (
-    <div>
     <ion-list>
             {activities.activities.map(activity =>
             <Activity
@@ -15,7 +14,6 @@ const ActivityList = withRouter(({ activities, showActivityDetail, history }) =>
             />
         )}
     </ion-list>
-        </div>
 ))
 
 export default ActivityList

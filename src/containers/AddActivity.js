@@ -6,8 +6,7 @@ import BackButton from '../components/BackButton'
 const AddActivity = ({ dispatch,back }) => {
     let input
 
-    return (
-        <div>
+    return [
         <ion-header>
             <ion-toolbar>
                 <ion-title>Add Activity</ion-title>
@@ -15,8 +14,8 @@ const AddActivity = ({ dispatch,back }) => {
                         <BackButton/>
                     </ion-buttons>
             </ion-toolbar>
-        </ion-header>
-
+        </ion-header>,
+        <ion-content>
             <form
                 onSubmit={e => {
                     e.preventDefault()
@@ -37,9 +36,8 @@ const AddActivity = ({ dispatch,back }) => {
                     Add Activity
                 </ion-button>
             </form>
-            </div>
-        
-    )
+        </ion-content>
+            ]
 }
 
 export default connect()(AddActivity)
