@@ -389,7 +389,7 @@ Next, we will separate the AddActivity form into it's own page and set up routin
 
 ## Pages and Routing
 
-We have pretty simple application with a list, filters and and input field. This is all cramped into App.js. Pretty soon this will get out of hand. Our AddActivity needs more fields, the list needs more details and we might at a search bar, etc. Pages are a nice abstraction for this. We create pages that consist of a number of components and containers. If we have multiple pages they can even share the same components and containers.
+We have pretty simple application with a list, filters and an input field. This is all cramped into App.js. Pretty soon this will get out of hand. Our AddActivity needs more fields, the list needs more details and we might add a search bar, etc. Pages are a nice abstraction for this. We create pages that consist of a number of components and containers. If we have multiple pages they can even share the same components and containers.
 
 We'll start by creating a page for our AddActivity container. First we create the pages folder
 `mkdir pages`
@@ -446,7 +446,8 @@ const AddActivityLink = withRouter(({ history }) => (
 
 export default AddActivityLink
 ```
-To activate routing we use `withHistory`. The withRouter higher-order component will inject the history object as a prop of the component. This allows you to access the push and replace methods without having to deal with the context.
+
+To activate routing we use `withHistory`. The withRouter higher-order component will inject the `history` object as a prop of the component.`history` is an HTML5 API builds a stack of pages for navigating. By using `withHistory` we are able to access the navigation stack without pushing props down through our components.
 
 The AddActivityLink component is added as part of the header component
 
@@ -476,26 +477,27 @@ const Header = () => (
 export default Header
 ```
 
-Similarly, we'll add a button on the AddActivity container to navigate back to the list. Because we'll probably need this in many places, we''l create this button as a separate component. In the components folder add the file ReturnToActivityList.js
-`touch ReturnToActivityList.js`
+Similarly, we'll add a button on the AddActivity container to navigate back. Because we'll probably need this in many places, we'll create this button as a separate component. In the components folder add the file BackButton.js
+`touch BackButton.js`
 
 ```jsx
+import React from 'react'
 import { withRouter } from 'react-router-dom'
 
-const ReturnToList = withRouter(({ history }) => (
+const BackButton = withRouter(({ history }) => (
     <button
-        type='button'
-        onClick={() => { history.push('/') }}
-        style={{
-            marginLeft: '4px',
-        }}
+        onClick={() => { history.goBack() }}
     >
-        Return to Activities List
+        Back
   </button>
 ))
+
+export default BackButton
 ```
 
-And add this to the AddActivity container.
+Our back-button utilizes the history API's `goBack()` method. This method will go back one step in the navigation stack. It is equivalent to using `go(-1)`.
+
+Import the BackButton in the AddActivity container.
 
 We have now set up routing and split our application into two pages.
 
@@ -506,12 +508,32 @@ Ionic provide a collection of UI components that is optimized for mobile use. Do
 
 ### Setting it up
 
-First we'll import the library. Currently there is no way to do this using af module loader (npm or yarn). Instead we will add it manually to the index.html in the public folder. Add the following line just before the closing head-tag.
+To use web components we need to import the components in our index.html file. We can get the components using a CDN or download the package and place it in the public folder.
+
+For CDN add the following line just before the closing head-tag:
+
 ```html
-`<script src="https://unpkg.com/@ionic/core@4.0.0-alpha.7/dist/ionic.js"></script>`
+<script src="https://unpkg.com/@ionic/core@4.0.0-alpha.7/dist/ionic.js"></script>
 ```
 
-All ionic components are now available to use in the app. All ionic components should be wrapped in a single ion-app container. This will be added in the the root index.js file inside the router tag.
+This can lead to some CORS issues where your browser will refuse to download scripts from a third-party site.
+
+To avoid that, and to allow for offline development enviroment, we download the package using npm
+
+`npm install @ionic/core`
+
+In the /node_modules folder find and copy the @ionic folder to the /public folder.
+
+Add the following lines just before the closing head-tag:
+
+```html
+<script src="%PUBLIC_URL%/@ionic/core/dist/ionic.js"></script>
+<link rel="stylesheet" href="%PUBLIC_URL%/@ionic/core/css/ionic.min.css">
+```
+
+All ionic components are now available to use in the app. 
+
+All ionic components must be wrapped in a single ion-app container. This will be added in the the root index.js file inside the router tag.
 
 ```jsx
 import React from 'react'
@@ -542,7 +564,7 @@ Now the app is set up for ionic components.
 
 ### Toolbar
 
-To create and app with a top toolbar and a scrollable area beneath, we need to use the ion-content component and set the attribute fullscreen to true. The ion-content is placed beneath the header that will contain our toolbar.
+To create an app with a top toolbar and a scrollable area beneath, we need to use the ion-content component and set the attribute fullscreen to true. The ion-content is placed beneath the header that will contain our toolbar.
 
 ```jsx
 import React from 'react'
@@ -564,7 +586,7 @@ export default App
 
 In our header component we add the toolbar, that will have a set of buttons. We'll group the filtering buttons and place them to the left, and move the AddActivity button to the right.
 
-In the header component we replace the outer most <div> with <ion-header>. This will make the toolbar stays at the top. Inside the toolbar we have two sets of buttons. Using the ion-buttons component we can group, and place them to the left (start) or right (end).
+Replace the outer most <div> with <ion-header>. This will make sure the toolbar stays at the top. Inside the toolbar we have two sets of buttons. Using the ion-buttons component we can group, and place them to the left (start) or right (end).
 ```jsx
 import React from 'react'
 import FilterLink from '../containers/FilterLink'
@@ -595,7 +617,13 @@ const Header = () => (
 export default Header
 ```
 
-In our Link and AddActivityLink components the button tag is replaced with ion-button, we remove the style attribute and add the attribute fill and set it to clear.
+In our Link, AddActivityLink, and BackButton components the button tag is replaced with ion-button, we remove the style attribute and add the attribute fill and set it to clear.
+
+Also, in the BackButton we replace the text "Back" with an icon:
+
+```jsx
+<ion-icon name="arrow-back"></ion-icon>
+```
 
 ### List
 
@@ -622,7 +650,7 @@ const ActivityList = ({ activities, toggleActivity }) => (
 export default ActivityList
 ```
 
-In the Activity component we replace the li tags with ion-item. Instead of the current strikethrough styling for completed activities we want the whole row to change its color. We remove the style attribute and replace it with ionic's color attribute. If the activity is completed we set the row color to primary.
+In the Activity component we replace the li tags with ion-item. Instead of the current strikethrough styling for completed activities, we want the whole row to change its color. We remove the style attribute and replace it with ionic's color attribute. If the activity is completed we set the row color to primary.
 
 ```jsx
 import React from 'react'
@@ -640,25 +668,6 @@ export default Activity
 ```
 
 ### Add Activity
-
-Our AddActivity page needs a header too. Instead of the current button to navigate to the list we add a back button.
-
-We use ion-button in the ReturnToActivityList component and replace the text with an icon.
-
-```jsx
-import React from 'react'
-import { withRouter } from 'react-router-dom'
-
-const ReturnToActivityList = withRouter(({ history }) => (
-    <ion-button
-        onClick={() => { history.push('/') }}
-    >
-        <ion-icon name="arrow-back"></ion-icon>
-  </ion-button>
-))
-
-export default ReturnToActivityList
-```
 
 In the AddActivity container we add a toolbar in the same way we created the toolbar in the main component.
 
