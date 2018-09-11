@@ -2,6 +2,7 @@ import React from 'react'
 import FilterLink from '../containers/FilterLink'
 import { VisibilityFilters } from '../actions/filter'
 import AddActivityLink from '../components/AddActivityLink'
+import ToggleMap from './ToggleMap';
 
 const Header = () => (
     <ion-header>
@@ -19,6 +20,7 @@ const Header = () => (
         </ion-buttons>
         <ion-buttons slot="end">
             <AddActivityLink/>
+            <ToggleMap />
         </ion-buttons>
     </ion-toolbar>
     </ion-header>

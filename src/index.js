@@ -9,6 +9,7 @@ import AddActivity from './pages/AddActivityPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
 import { fetchActivities } from './actions/activities'
 import thunkMiddleware from 'redux-thunk'
+import ActivityMapPage from './pages/ActivityMapPage';
 
 const store = createStore(
     rootReducer,
@@ -24,6 +25,7 @@ render(
                 <Route exact path="/" component={App} />
                 <Route path="/add-activity" component={AddActivity} />
                 <Route path="/activity-detail/:id" component={ActivityDetailPage} />
+                <Route path="/map" component={ActivityMapPage} />
             </ion-app>
         </Router>
     </Provider>,

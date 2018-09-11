@@ -1019,3 +1019,124 @@ function activities(
 
 export default activities
 ```
+
+## Maps and Leaflet
+
+### Setting up the map view
+
+There are lots of options to display data on a map in React. Common Options are, of course, Google Maps. Google Maps are good looking and easy to work with, but the API is rather limited. Since the Terms Of Service prevents us from using another API, and because the Google Maps API is too limited for our puposes, we will use another map provider. For development, we will use OpenStreetMaps.
+
+We use Leaflet as the API for manipulating the map. (moving, zooming, and displaying data).
+
+First, add the Leaftlet stylesheets and scripts to the index.html, just before the closing head-tag
+
+```html
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+      crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js" integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+      crossorigin=""></script>
+```
+
+Leaflet directly manipulates  the DOM. This can cause conflicts with React. We therefore need to isolate the map from React. React-Leaflet is a library that does exactly this.
+
+Install it using:
+
+`npm install --save react-leaflet`
+
+The map will have its own reusable component called MapView. In the component folder create the file `MapView.js`.
+
+Add the following content:
+
+```jsx
+import React, { Component } from 'react'
+import { Map, TileLayer } from 'react-leaflet'
+
+const leafletContainer = {
+    height: '92vh',
+    width: '100vw',
+    margin: 'auto'
+}
+
+const DEFAULT_VIEWPORT = {
+    center: [51.505, -0.09],
+    zoom: 13,
+}
+
+export default class MapView extends Component {
+    state = {
+        viewport: DEFAULT_VIEWPORT,
+    }
+
+    render() {
+        return (
+            <Map
+                viewport={this.state.viewport}
+                style = {leafletContainer}>
+                <TileLayer
+                    attribution="&amp;copy <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+            </Map>
+        )
+    }
+}
+```
+
+The component imports react-leaflet. We set the default zoom level and center in the object `DEFAULT_VIEWPORT`. Leaflet requires the height is set either as a fixed value or a percentage of the browsers viewport. Because our header takes up some space we set the height to 92vh instead of 100vh.
+
+The component will be rendered in the page `ActivityMapPage.js` which has the following:
+
+```jsx
+import React from 'react'
+import MapView from '../components/MapView'
+import Header from '../components/Header'
+
+const ActivityMapPage = (ownProps) => [
+    <Header />,
+    <ion-content>
+        <MapView/>
+    </ion-content>
+]
+
+export default ActivityMapPage
+```
+
+In the root `index.js` we import the `ActivityMapPage` and add the routing for the map with this line:
+
+```jsx
+<Route path="/map" component={ActivityMapPage} />
+```
+
+A map will now be shown if we type `/map` after the root URL. We do not want to manually type the path to the map. Instead we will add button to the header for toggleing the map and list view.
+
+Create a file in the component folder called `ToggleMap.js` and insert
+
+```jsx
+import React from 'react'
+import { withRouter } from 'react-router-dom'
+
+let labelText = window.location.pathname === '/map' ? 'Show List' : 'Show Map';
+const ToggleMap = withRouter(({ history }) => (
+    <ion-button
+        type='button'
+        onClick={() => {
+            if (window.location.pathname === '/map') {
+                labelText = 'Show Map';
+                history.push('/');
+            }
+            else {
+                labelText = 'Show List';
+                history.push('/map');
+            }
+        }}
+    >
+        {labelText}
+    </ion-button>
+))
+
+export default ToggleMap
+```
+Using the withRouter higher level component we route to the path `/map` or to the root depending on the current URL. We also toggle the buttons label.
+
+Insert the `<ToggleMap />` in the header component after `<AddActivityLink />`
