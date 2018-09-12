@@ -1140,3 +1140,139 @@ export default ToggleMap
 Using the withRouter higher level component we route to the path `/map` or to the root depending on the current URL. We also toggle the buttons label.
 
 Insert the `<ToggleMap />` in the header component after `<AddActivityLink />`
+
+### Adding markers
+
+To make the map useful, we want to add markers for our datapoint. We connect the MapView component to our data store in the same way we did for the list - using a container. Create a copy of `VisibleActivityList.js` and rename it to `VisibleActivityMap.js`. The only changes we need to make the import of the MapView component and exporting the MapView in connect().
+
+```jsx
+import { connect } from 'react-redux'
+import { showActivityDetail } from '../actions/activities'
+import MapView from '../components/MapView'
+import { VisibilityFilters } from '../actions/filter'
+
+const getVisibleActivities = (activities, filter) => {
+    switch (filter) {
+        case VisibilityFilters.SHOW_ALL:
+            return activities
+        case VisibilityFilters.SHOW_COMPLETED:
+            return activities.filter(t => t.completed)
+        case VisibilityFilters.SHOW_ACTIVE:
+            return activities.filter(t => !t.completed)
+        default:
+            throw new Error('Unknown filter: ' + filter)
+    }
+}
+
+const mapStateToProps = state => ({
+    activities: getVisibleActivities(state.activities, state.visibilityFilter)
+})
+
+const mapDispatchToProps = dispatch => ({
+    showActivityDetail: id => dispatch(showActivityDetail(id))
+})
+
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(MapView)
+```
+
+In `ActivityMapPage.js` we replace `<MapView/>` with the container `<VisibleActivityMap props={ownProps}/>`. Make sure to import it and remove the import of MapView. Nothing has really changed except that now we have access to our activities data in the MapView component.
+
+To display the data we need three things: 1) data, 2) a marker for each data point, and 3) adjust the map viewport to fit the markers.
+
+Using redux's connect method and a mapStateToProps we have access to the data. We then create a simple marker, a list of markers and add the marker to the map. The is changed to a functional component.
+
+We create the function `getGeoBounds` to calculate the corners of the smallest rectangle that will fit all of the data points in activities.
+
+```jsx
+import React from 'react'
+import { Map, TileLayer, Marker } from 'react-leaflet'
+import { withRouter } from 'react-router-dom'
+import { connect } from 'react-redux'
+
+const leafletContainer = {
+    height: '92vh',
+    width: '100vw',
+    margin: 'auto'
+}
+
+const DEFAULT_VIEWPORT = {
+    center: [51.505, -0.09],
+    zoom: 13,
+}
+
+const mapStateToProps = state => ({
+    activities: state.activities
+})
+
+const PopupMarker = withRouter(({ id, children, position, history }) => (
+    <Marker
+        position={position}
+    >
+    </Marker>
+))
+
+const MarkersList = ({ markers }) => {
+    const items = markers.map(({ key, ...props }) => (
+        <PopupMarker key={key} {...props} id={key} />
+    ))
+    return <div style={{ display: 'none' }}>{items}</div>
+}
+
+const getGeoBounds = (markers) => {
+    let allLat = markers.reduce((prev, curr) => {
+        return [...prev, curr.position[0]];
+    }, []);
+    let allLong = markers.reduce((prev, curr) => {
+        return [...prev, curr.position[1]];
+    }, []);
+
+    let maxLat = Math.max.apply(Math, allLat);
+    let minLat = Math.min.apply(Math, allLat);
+
+    let maxLong = Math.max.apply(Math, allLong);
+    let minLong = Math.min.apply(Math, allLong);
+
+    let newBounds = this.bounds;
+
+    if (allLat.length > 0) {
+        let corner1 = [maxLat, maxLong],
+            corner2 = [minLat, minLong];
+        newBounds = [corner1, corner2];
+    }
+
+    return newBounds;
+};
+const MapComponent = (props) => {
+
+    const markers = props.activities.activities.map(activity => {
+        return {
+            key: activity.id,
+            position: [
+                activity.company.location ? activity.company.location.latitude : 55,
+                activity.company.location ? activity.company.location.longitude : 9
+            ],
+            children: activity.company.name
+        }
+    })
+
+    const bounds = getGeoBounds(markers);
+
+    return (
+        <Map
+            viewport={DEFAULT_VIEWPORT}
+            bounds={bounds}
+            style={leafletContainer}>
+            <TileLayer
+                attribution="&amp;copy <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <MarkersList markers={markers} />
+        </Map>
+    )
+ }
+
+export default connect(mapStateToProps)(MapComponent)
+```
