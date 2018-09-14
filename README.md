@@ -1143,7 +1143,7 @@ Insert the `<ToggleMap />` in the header component after `<AddActivityLink />`
 
 ### Adding markers
 
-To make the map useful, we want to add markers for our datapoint. We connect the MapView component to our data store in the same way we did for the list - using a container. Create a copy of `VisibleActivityList.js` and rename it to `VisibleActivityMap.js`. The only changes we need to make the import of the MapView component and exporting the MapView in connect().
+To make the map useful, we want to add markers for our datapoint. We connect the MapView component to our data store in the same way we did for the list - using a container. Create a copy of `VisibleActivityList.js` and rename it to `VisibleActivityMap.js`. The only changes we need to make is the import of the MapView component and exporting the MapView in connect().
 
 ```jsx
 import { connect } from 'react-redux'
@@ -1182,7 +1182,7 @@ In `ActivityMapPage.js` we replace `<MapView/>` with the container `<VisibleActi
 
 To display the data we need three things: 1) data, 2) a marker for each data point, and 3) adjust the map viewport to fit the markers.
 
-Using redux's connect method and a mapStateToProps we have access to the data. We then create a simple marker, a list of markers and add the marker to the map. The is changed to a functional component.
+Data is already passed to the component from our container `<VisibleActivityMap props={ownProps}/>`. We then create a simple marker, a list of markers and add the marker to the map. Because state is handled by Redux we don't need state in our `MapView`. We therefor change `<MapView>` to a functional component. 
 
 We create the function `getGeoBounds` to calculate the corners of the smallest rectangle that will fit all of the data points in activities.
 
@@ -1202,10 +1202,6 @@ const DEFAULT_VIEWPORT = {
     center: [51.505, -0.09],
     zoom: 13,
 }
-
-const mapStateToProps = state => ({
-    activities: state.activities
-})
 
 const PopupMarker = withRouter(({ id, children, position, history }) => (
     <Marker
@@ -1245,7 +1241,7 @@ const getGeoBounds = (markers) => {
 
     return newBounds;
 };
-const MapComponent = (props) => {
+const MapView = (props) => {
 
     const markers = props.activities.activities.map(activity => {
         return {
@@ -1274,5 +1270,155 @@ const MapComponent = (props) => {
     )
  }
 
-export default connect(mapStateToProps)(MapComponent)
+export default MapView
+```
+
+### Alert with navigation
+
+Our markers are currently only displaying location of activities. We want them to be used for navigation as well. To do that we implement Ionic's Alert. This will display an alert box in the center of the viewport, and can have a list of clickable items.
+
+As with every Ionic component the alert is a web component. It is activated using the `create()` method on the `ion-alert-controller` component. Using vanilla JS we would access this by using `document.querySelector('ion-alert-controller');`. Accesssing the DOM directly is not a good pattern in React. Instead we will use the `ref` attribute to get a reference to the web component and its method. This way we can access the components API without getting in the way of React.
+
+We add the web component `<ion-alert-controller ref={activityAlert}>` somewhere between the two `<Map>` tags in the `MapView` component. The `ref` attribute means that you can create a reference called `activityAlert` to the web component somewhere in `MapView` by using the `createRef()` method. Within `MapView`, but before the `return ( <Map>...`  statement, add the line:
+
+```jsx
+const activityAlert = React.createRef();
+```
+
+We now have access to web component and all of its proporties and methods. This access is limited to anything within the `MapView` funcitonal component. We therefore have move some of our components, including `PopupMarker`, inside of of `MapView`. Another approach would be to use React's `forwardRef()` method. That way we could get access to ref from anywhere.
+
+From the alert, the user should be able to navigate to the detail view for the activity and create a new activity.
+
+Setting up the options on the alert is done using the options object on the `create()` method. The create method returns a promise so we use the `async` `await` pattern.
+
+For our navigation we use the `withRouter()` method and wrap it around the `PopupMarker`. (why won't it work if we wrap it around `presentAlert()`?). That way we can forward the `history` to `presentAlert` and use `history.push()` in the options object when we create the alert.
+
+When fetching the details view we reuse the same action we set up when navigating from the list. 
+
+Here's the complete `MapView.js`:
+
+```jsx
+import React from 'react'
+import { Map, TileLayer, Marker } from 'react-leaflet'
+import { withRouter } from 'react-router-dom'
+
+const leafletContainer = {
+    height: '92vh',
+    width: '100vw',
+    margin: 'auto',
+    position: 'fixed'
+}
+
+const DEFAULT_VIEWPORT = {
+    center: [51.505, -0.09],
+    zoom: 13,
+}
+
+const presentAlert = async (id, companyName, history, ref, showActivityDetail) => {
+
+    const alert = await ref.current.create({
+        mode: 'ios',
+        header: companyName,
+        buttons: [{
+            text: 'Info',
+            role: 'details',
+            handler: () => {
+                history.push('/activity-detail/' + id);
+                return showActivityDetail(id);
+            }
+        }, {
+            text: 'Add Activity',
+            handler: () => {
+                history.push('/add-activity/');
+            }
+        }, {
+            text: 'Add to Favorites',
+            handler: () => {
+                console.log('Favorite clicked');
+            }
+        }, {
+            text: 'Close',
+            role: 'cancel',
+            handler: () => {
+                console.log('Cancel clicked');
+            }
+        }]
+    });
+    await alert.present();
+}
+
+
+const getGeoBounds = (markers) => {
+    let allLat = markers.reduce((prev, curr) => {
+        return [...prev, curr.position[0]];
+    }, []);
+    let allLong = markers.reduce((prev, curr) => {
+        return [...prev, curr.position[1]];
+    }, []);
+
+    let maxLat = Math.max.apply(Math, allLat);
+    let minLat = Math.min.apply(Math, allLat);
+
+    let maxLong = Math.max.apply(Math, allLong);
+    let minLong = Math.min.apply(Math, allLong);
+
+    let newBounds = this.bounds;
+
+    if (allLat.length > 0) {
+        let corner1 = [maxLat, maxLong],
+            corner2 = [minLat, minLong];
+        newBounds = [corner1, corner2];
+    }
+
+    return newBounds;
+};
+const MapView = (props) => {
+
+    const markers = props.activities.activities.map(activity => {
+        return {
+            key: activity.id,
+            position: [
+                activity.company.location ? activity.company.location.latitude : 55,
+                activity.company.location ? activity.company.location.longitude : 9
+            ],
+            children: activity.company.name
+        }
+    })
+
+    const activityAlertController = React.createRef();
+
+    const PopupMarker = withRouter(({ id, children, position, history }) => (
+        <Marker
+            position={position}
+            onClick={() => { presentAlert(id, children, history, activityAlertController) }}
+        >
+        </Marker>
+    ))
+
+    const MarkersList = ({ markers }) => {
+        const items = markers.map(({ key, ...props }) => (
+            <PopupMarker key={key} {...props} id={key} />
+        ))
+        return <div style={{ display: 'none' }}>{items}</div>
+    }
+
+    const bounds = getGeoBounds(markers);
+
+    return (
+        <Map
+            viewport={DEFAULT_VIEWPORT}
+            bounds={bounds}
+            style={leafletContainer}>
+            <TileLayer
+                attribution="&amp;copy <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <ion-alert-controller ref={activityAlertController}/>
+            <MarkersList markers={markers} />
+        </Map>
+
+    )
+ }
+
+export default MapView;
 ```

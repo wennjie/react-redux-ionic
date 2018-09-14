@@ -1,7 +1,6 @@
 import React from 'react'
 import { Map, TileLayer, Marker } from 'react-leaflet'
 import { withRouter } from 'react-router-dom'
-import { connect } from 'react-redux'
 
 const leafletContainer = {
     // height cannot be set relative to ancester (using e.g. height = '100%'). It must be set fixed or relative to viewport
@@ -16,31 +15,39 @@ const DEFAULT_VIEWPORT = {
     zoom: 13,
 }
 
+const presentAlert = async (id, companyName, history, ref, showActivityDetail) => {
 
-const mapStateToProps = state => ({
-    activities: state.activities
-})
-
-const mapDispatchToProps = dispatch => ({
-    showActivityDetail: id => dispatch({
-        type: 'type',
-        payload: 2
-    })
-})
-
-const PopupMarker = withRouter(({ id, children, position, history }) => (
-    <Marker
-        position={position}
-    >
-    </Marker>
-))
-
-const MarkersList = ({ markers }) => {
-    const items = markers.map(({ key, ...props }) => (
-        <PopupMarker key={key} {...props} id={key} />
-    ))
-    return <div style={{ display: 'none' }}>{items}</div>
+    const alert = await ref.current.create({
+        mode: 'ios',
+        header: companyName,
+        buttons: [{
+            text: 'Info',
+            role: 'details',
+            handler: () => {
+                history.push('/activity-detail/' + id);
+                return showActivityDetail(id);
+            }
+        }, {
+            text: 'Add Activity',
+            handler: () => {
+                history.push('/add-activity/');
+            }
+        }, {
+            text: 'Add to Favorites',
+            handler: () => {
+                console.log('Favorite clicked');
+            }
+        }, {
+            text: 'Close',
+            role: 'cancel',
+            handler: () => {
+                console.log('Cancel clicked');
+            }
+        }]
+    });
+    await alert.present();
 }
+
 
 const getGeoBounds = (markers) => {
     let allLat = markers.reduce((prev, curr) => {
@@ -66,7 +73,7 @@ const getGeoBounds = (markers) => {
 
     return newBounds;
 };
-const MapComponent = (props) => {
+const MapView = (props) => {
 
     const markers = props.activities.activities.map(activity => {
         return {
@@ -79,6 +86,23 @@ const MapComponent = (props) => {
         }
     })
 
+    const activityAlertController = React.createRef();
+
+    const PopupMarker = withRouter(({ id, children, position, history }) => (
+        <Marker
+            position={position}
+            onClick={() => { presentAlert(id, children, history, activityAlertController) }}
+        >
+        </Marker>
+    ))
+
+    const MarkersList = ({ markers }) => {
+        const items = markers.map(({ key, ...props }) => (
+            <PopupMarker key={key} {...props} id={key} />
+        ))
+        return <div style={{ display: 'none' }}>{items}</div>
+    }
+
     const bounds = getGeoBounds(markers);
 
     return (
@@ -90,9 +114,11 @@ const MapComponent = (props) => {
                 attribution="&amp;copy <a href=&quot;http://osm.org/copyright&quot;>OpenStreetMap</a> contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+            <ion-alert-controller ref={activityAlertController}/>
             <MarkersList markers={markers} />
         </Map>
+
     )
  }
 
-export default connect(mapStateToProps, mapDispatchToProps)(MapComponent)
+export default MapView;
