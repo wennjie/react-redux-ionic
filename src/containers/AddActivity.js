@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { addActivity } from '../actions/activities'
 import BackButton from '../components/BackButton'
 
-const AddActivity = ({ dispatch,back }) => {
+const AddActivity = ({ dispatch }) => {
     let input
 
     return [
@@ -15,7 +15,6 @@ const AddActivity = ({ dispatch,back }) => {
                     </ion-buttons>
             </ion-toolbar>
         </ion-header>,
-        <ion-content>
             <form
                 onSubmit={e => {
                     e.preventDefault()
@@ -36,7 +35,6 @@ const AddActivity = ({ dispatch,back }) => {
                     Add Activity
                 </ion-button>
             </form>
-        </ion-content>
             ]
 }
 

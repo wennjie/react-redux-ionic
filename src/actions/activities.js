@@ -1,13 +1,16 @@
+export const ADD_ACTIVITY = 'ADD_ACTIVITY'
 export const REQUEST_ACTIVITIES = 'REQUEST_ACTIVITIES'
 export const RECEIVE_ACTIVITIES = 'RECEIVE_ACTIVITIES'
 export const SHOW_ACTIVITY_DETAIL = 'SHOW_ACTIVITY_DETAIL'
 
-let nextActivityId = 0
-export const addActivity = text => ({
-    type: 'ADD_ACTIVITY',
-    id: nextActivityId++,
-    text
-})
+export function addActivity(id) {
+    return dispatch => {
+        dispatch({
+            type: ADD_ACTIVITY,
+            id
+        })
+    }
+}
 
 export function showActivityDetail(id) {
     return dispatch => {

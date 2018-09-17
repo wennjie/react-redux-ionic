@@ -15,40 +15,6 @@ const DEFAULT_VIEWPORT = {
     zoom: 13,
 }
 
-const presentAlert = async (id, companyName, history, ref, showActivityDetail) => {
-
-    const alert = await ref.current.create({
-        mode: 'ios',
-        header: companyName,
-        buttons: [{
-            text: 'Info',
-            role: 'details',
-            handler: () => {
-                history.push('/activity-detail/' + id);
-                return showActivityDetail(id);
-            }
-        }, {
-            text: 'Add Activity',
-            handler: () => {
-                history.push('/add-activity/');
-            }
-        }, {
-            text: 'Add to Favorites',
-            handler: () => {
-                console.log('Favorite clicked');
-            }
-        }, {
-            text: 'Close',
-            role: 'cancel',
-            handler: () => {
-                console.log('Cancel clicked');
-            }
-        }]
-    });
-    await alert.present();
-}
-
-
 const getGeoBounds = (markers) => {
     let allLat = markers.reduce((prev, curr) => {
         return [...prev, curr.position[0]];
@@ -73,9 +39,44 @@ const getGeoBounds = (markers) => {
 
     return newBounds;
 };
-const MapView = (props) => {
+const MapView = withRouter(({ activities, history, showActivityDetail}) => {
 
-    const markers = props.activities.activities.map(activity => {
+    const activityAlertController = React.createRef();
+
+    const presentAlert = async (id, companyName, ref) => {
+
+        const alert = await ref.current.create({
+            mode: 'ios',
+            header: companyName,
+            buttons: [{
+                text: 'Info',
+                role: 'details',
+                handler: () => {
+                    history.push('/activity-detail/' + id);
+                    return showActivityDetail(id);
+                }
+            }, {
+                text: 'Add Activity',
+                handler: () => {
+                    history.push('/add-activity/');
+                }
+            }, {
+                text: 'Add to Favorites',
+                handler: () => {
+                    console.log('Favorite clicked');
+                }
+            }, {
+                text: 'Close',
+                role: 'cancel',
+                handler: () => {
+                    console.log('Cancel clicked');
+                }
+            }]
+        });
+        await alert.present();
+    }
+
+    const markers = activities.activities.map(activity => {
         return {
             key: activity.id,
             position: [
@@ -86,15 +87,13 @@ const MapView = (props) => {
         }
     })
 
-    const activityAlertController = React.createRef();
-
-    const PopupMarker = withRouter(({ id, children, position, history }) => (
+    const PopupMarker = ({ id, children, position }) => (
         <Marker
             position={position}
-            onClick={() => { presentAlert(id, children, history, activityAlertController) }}
+            onClick={() => { presentAlert(id, children, activityAlertController) }}
         >
         </Marker>
-    ))
+    )
 
     const MarkersList = ({ markers }) => {
         const items = markers.map(({ key, ...props }) => (
@@ -119,6 +118,6 @@ const MapView = (props) => {
         </Map>
 
     )
- }
+ })
 
 export default MapView;

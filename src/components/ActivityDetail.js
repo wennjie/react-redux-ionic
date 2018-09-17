@@ -1,8 +1,8 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
 
-const ActivityDetail = withRouter(({ activity, showActivityDetail, history }) => (
-    <div>
+const ActivityDetail = withRouter(({ activity, history }) => (
+    <ion-list>
         <ion-item mode="ios">
             <ion-label position="stack">Company</ion-label>
             <ion-text>{activity.company.name}</ion-text>
@@ -23,7 +23,7 @@ const ActivityDetail = withRouter(({ activity, showActivityDetail, history }) =>
                     )}
                 </ion-text>
         </ion-item>     
-    </div>
+    </ion-list>
 ))
 
 export default ActivityDetail

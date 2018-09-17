@@ -2,10 +2,10 @@ import React from 'react'
 import VisibleActivityMap from '../containers/VisibleActivityMap';
 import Header from '../components/Header'
 
-const ActivityMapPage = (ownProps) => [
+const ActivityMapPage = () => [
     <Header />,
     <ion-content>
-        <VisibleActivityMap props={ownProps} />
+        <VisibleActivityMap />
     </ion-content>
 ]
 

@@ -1,6 +1,7 @@
 import {
     REQUEST_ACTIVITIES,
-    RECEIVE_ACTIVITIES
+    RECEIVE_ACTIVITIES,
+    ADD_ACTIVITY
 } from '../actions/activities'
 
 
@@ -14,7 +15,7 @@ function activities(
     action
 ) {
     switch (action.type) {
-        case 'ADD_ACTIVITY':
+        case ADD_ACTIVITY:
             return [
                 ...state,
                 {

@@ -5,6 +5,9 @@ const AddActivityLink = withRouter(({ history }) => (
     <ion-button
         type='button'
         onClick={() => { history.push('/add-activity') }}
+        style={{
+            marginLeft: '4px',
+        }}
     >
         Add Activity
     </ion-button>
