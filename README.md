@@ -1422,3 +1422,16 @@ const MapView = (props) => {
 
 export default MapView;
 ```
+
+## Forms and validators
+
+Forms are native HTML elements and include <input>, <select>, and <textarea>. These elements have in them their own state. They can work fine in React and are called uncontrolled components. Often you want to validate the user's input and provide the user some useful feedback if something is not right, e.g. not valid email, text in a numbers only field, etc. For this we take advantage of React and use controlled components. We no longer let the elements have their own state but, instead use a shared state. 
+
+### Should we use redux for the forms?
+Since we are using Redux we could consider using Redux for the form's state. Using Redux have benefits. We can use timetravelling when debugging, log errors, and every other middleware the Redux community has developed. Most importantly, we have the state of the form shared across the application. This would be really handy if we had a shopping cart. The items already in the cart could be marked if the user wants to browse a bit more before checking out. However, we might not need that. Using Redux for forms might not be worth the effort.
+
+### Controlled components
+
+For now we will stick with controlled components. We will still use Redux; once we submit our form we will update the application's state using Redux. 
+
+We continue with our `AddActivityPage`. We add validators and delegate control of the state to React.
